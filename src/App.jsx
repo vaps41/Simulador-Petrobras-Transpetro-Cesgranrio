@@ -231,8 +231,21 @@ const WelcomeScreen = ({ onStart, history, onClearHistory }) => {
         {/* COLUNA ESQUERDA - CONFIGURAÇÃO */}
         <div className="flex-1 space-y-6">
           <div className="flex items-center space-x-4 mb-2">
-            <div className={`${isElectricRole ? 'bg-yellow-100 text-yellow-600' : 'bg-green-100 text-green-700'} p-3 rounded-2xl`}>
-              {isElectricRole ? <Zap className="w-8 h-8" /> : <Award className="w-8 h-8" />}
+            {/* LOGO DA EMPRESA */}
+            <div className="flex-shrink-0">
+               <img 
+                 src="/logo-simulpetro.png" 
+                 alt="Logo Simulpetro" 
+                 className="h-20 w-auto object-contain" 
+                 onError={(e) => {
+                   // Fallback se a imagem não carregar: mostra o ícone antigo
+                   e.target.style.display = 'none';
+                   e.target.nextSibling.style.display = 'flex';
+                 }}
+               />
+               <div className={`hidden ${isElectricRole ? 'bg-yellow-100 text-yellow-600' : 'bg-green-100 text-green-700'} p-3 rounded-2xl`}>
+                  {isElectricRole ? <Zap className="w-8 h-8" /> : <Award className="w-8 h-8" />}
+               </div>
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-800">Simulado Petrobras</h1>
@@ -442,9 +455,12 @@ const QuizScreen = ({ questions, onFinish, roleName, mode }) => {
     <div className="min-h-screen bg-slate-100 flex flex-col">
       <header className={`bg-white shadow-sm p-4 sticky top-0 z-10 border-b-4 ${mode === 'estudo' ? 'border-blue-400' : 'border-yellow-400'}`}>
         <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <div>
-             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-1">{roleName}</span>
-             <span className="font-bold text-gray-800 text-lg">Questão {currentQuestionIndex + 1} <span className="text-gray-400 text-sm">/ {totalQuestions}</span></span>
+          <div className="flex items-center">
+             <img src="/logo-simulpetro.png" className="h-8 w-auto mr-3 hidden md:block opacity-80" alt="Logo" onError={(e) => e.target.style.display='none'}/>
+             <div>
+               <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-1">{roleName}</span>
+               <span className="font-bold text-gray-800 text-lg">Questão {currentQuestionIndex + 1} <span className="text-gray-400 text-sm">/ {totalQuestions}</span></span>
+             </div>
           </div>
           {mode === 'simulado' && (
             <div className={`flex items-center font-mono font-bold px-4 py-2 rounded-lg bg-gray-50 border ${timeLeft < 60 ? 'text-red-600 border-red-200 animate-pulse' : 'text-gray-700 border-gray-200'}`}>
@@ -594,12 +610,15 @@ const ResultScreen = ({ questions, userAnswers, onRetry, roleName, mode }) => {
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-8 border border-gray-100">
           <div className="bg-gradient-to-r from-gray-900 to-slate-800 text-white p-8 relative overflow-hidden">
             <div className="relative z-10 flex flex-col md:flex-row justify-between items-center">
-                <div className="mb-6 md:mb-0 text-center md:text-left">
+                <div className="mb-6 md:mb-0 text-center md:text-left flex-1">
                     <div className="flex items-center justify-center md:justify-start space-x-2 mb-2 opacity-80">
                       <span className="uppercase tracking-widest text-xs font-bold">Resultado</span>
                       <span className="px-2 py-0.5 rounded bg-white/20 text-[10px]">{mode === 'estudo' ? 'MODO ESTUDO' : 'SIMULADO'}</span>
                     </div>
-                    <h1 className="text-3xl font-bold text-yellow-400 mb-2">{roleName}</h1>
+                    <div className="flex items-center justify-center md:justify-start space-x-4 mb-2">
+                       <img src="/logo-simulpetro.png" className="h-10 w-auto bg-white/10 rounded p-1" alt="Logo" onError={(e) => e.target.style.display='none'} />
+                       <h1 className="text-3xl font-bold text-yellow-400">{roleName}</h1>
+                    </div>
                     <p className="text-slate-300">{feedback}</p>
                 </div>
                 <div className="flex flex-col items-center">
