@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, CheckCircle, XCircle, BookOpen, BarChart2, Award, ChevronRight, RefreshCw, AlertCircle, Briefcase, Zap } from 'lucide-react';
+import { 
+  Clock, CheckCircle, XCircle, BookOpen, BarChart2, Award, 
+  ChevronRight, RefreshCw, AlertCircle, Briefcase, Zap, 
+  History, GraduationCap, PlayCircle, Trash2 
+} from 'lucide-react';
 
 // --- CONFIGURAÇÃO DE CARGOS E ÊNFASES ---
 const ROLES = [
   { id: 'eng_petroleo', label: 'Engenharia de Petróleo' },
-  { id: 'eng_eletrica', label: 'Engenharia Elétrica' }, // NOVO
-  { id: 'tec_eletrica', label: 'Técnico de Manutenção - Elétrica' }, // NOVO
+  { id: 'eng_eletrica', label: 'Engenharia Elétrica' },
+  { id: 'tec_eletrica', label: 'Técnico de Manutenção - Elétrica' },
   { id: 'tec_seguranca', label: 'Técnico de Segurança do Trabalho' },
   { id: 'administracao', label: 'Administração' },
   { id: 'tec_operacao', label: 'Técnico de Operação (Júnior)' }
 ];
 
-// --- BANCO DE QUESTÕES (ATUALIZADO COM ELÉTRICA) ---
+// --- BANCO DE QUESTÕES ---
 const QUESTION_BANK = [
   // --- CONHECIMENTOS BÁSICOS (COMUNS A TODOS) ---
   {
@@ -157,7 +161,7 @@ const QUESTION_BANK = [
     explanation: 'A NR-10 proíbe adornos pessoais e exige vestimentas que não sejam inflamáveis e que protejam contra arco elétrico.'
   },
 
-  // --- OUTROS CARGOS (Mantidos para integridade) ---
+  // --- OUTROS CARGOS ---
   {
     id: 101,
     subject: 'Conhecimentos Específicos',
@@ -194,8 +198,9 @@ const QUESTION_BANK = [
 
 // --- COMPONENTES ---
 
-const WelcomeScreen = ({ onStart }) => {
+const WelcomeScreen = ({ onStart, history, onClearHistory }) => {
   const [selectedRole, setSelectedRole] = useState('');
+  const [mode, setMode] = useState('simulado'); // 'simulado' | 'estudo'
   const [selectedSubjects, setSelectedSubjects] = useState({
     'Língua Portuguesa': true,
     'Matemática / Raciocínio Lógico': true,
@@ -204,139 +209,203 @@ const WelcomeScreen = ({ onStart }) => {
   const [numQuestions, setNumQuestions] = useState(5);
 
   const toggleSubject = (subject) => {
-    setSelectedSubjects(prev => ({
-      ...prev,
-      [subject]: !prev[subject]
-    }));
+    setSelectedSubjects(prev => ({ ...prev, [subject]: !prev[subject] }));
   };
 
   const handleStart = () => {
-    if (!selectedRole) {
-      alert("Por favor, selecione o Cargo/Ênfase antes de iniciar.");
-      return;
-    }
+    if (!selectedRole) return alert("Por favor, selecione o Cargo/Ênfase.");
     const activeSubjects = Object.keys(selectedSubjects).filter(k => selectedSubjects[k]);
-    if (activeSubjects.length === 0) {
-      alert("Selecione pelo menos uma disciplina.");
-      return;
-    }
-    onStart(selectedRole, activeSubjects, numQuestions);
+    if (activeSubjects.length === 0) return alert("Selecione pelo menos uma disciplina.");
+    onStart(selectedRole, activeSubjects, numQuestions, mode);
   };
 
   const isElectricRole = selectedRole.includes('eletrica');
+  const averageScore = history.length > 0 
+    ? Math.round(history.reduce((acc, curr) => acc + curr.score, 0) / history.length) 
+    : 0;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-6">
-      <div className={`bg-white rounded-2xl shadow-xl p-8 max-w-md w-full border-t-4 ${isElectricRole ? 'border-yellow-400' : 'border-green-600'}`}>
-        <div className="flex justify-center mb-6">
-          <div className={`${isElectricRole ? 'bg-yellow-100' : 'bg-green-100'} p-4 rounded-full transition-colors duration-500`}>
-             {isElectricRole ? (
-               <Zap className="w-12 h-12 text-yellow-600" />
-             ) : (
-               <Award className="w-12 h-12 text-green-700" />
-             )}
+    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-4 md:p-6">
+      <div className={`bg-white rounded-3xl shadow-xl p-6 md:p-8 max-w-5xl w-full border-t-8 ${isElectricRole ? 'border-yellow-400' : 'border-green-600'} flex flex-col md:flex-row gap-8`}>
+        
+        {/* COLUNA ESQUERDA - CONFIGURAÇÃO */}
+        <div className="flex-1 space-y-6">
+          <div className="flex items-center space-x-4 mb-2">
+            <div className={`${isElectricRole ? 'bg-yellow-100 text-yellow-600' : 'bg-green-100 text-green-700'} p-3 rounded-2xl`}>
+              {isElectricRole ? <Zap className="w-8 h-8" /> : <Award className="w-8 h-8" />}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Simulado Petrobras</h1>
+              <p className="text-gray-400 text-sm font-medium">Focado na Banca Cesgranrio</p>
+            </div>
           </div>
-        </div>
-        <h1 className="text-3xl font-bold text-gray-800 text-center mb-2">Simulado Petrobras</h1>
-        <p className="text-gray-500 text-center mb-8 text-sm">Baseado nos editais Cesgranrio</p>
 
-        <div className="space-y-6 mb-8">
-          {/* SELEÇÃO DE CARGO */}
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-            <label className="block text-sm font-bold text-blue-800 mb-2 flex items-center">
-              <Briefcase className="w-4 h-4 mr-2" /> Selecione o Cargo/Ênfase
-            </label>
-            <select 
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
-              className="w-full p-3 rounded border border-blue-200 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
+          <div className="space-y-4">
+             {/* CARGO */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block flex items-center">
+                <Briefcase className="w-3 h-3 mr-1" /> Cargo / Ênfase
+              </label>
+              <select 
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+                className="w-full p-2.5 rounded-lg border border-slate-300 bg-white text-gray-700 font-medium focus:ring-2 focus:ring-green-500 outline-none"
+              >
+                <option value="" disabled>Selecione seu cargo...</option>
+                {ROLES.map(role => (
+                  <option key={role.id} value={role.id}>{role.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* MODO DE JOGO - NOVIDADE */}
+            <div className="grid grid-cols-2 gap-3">
+              <button 
+                onClick={() => setMode('simulado')}
+                className={`p-3 rounded-xl border-2 flex flex-col items-center justify-center transition-all ${mode === 'simulado' ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 hover:border-slate-300 text-slate-500'}`}
+              >
+                <Clock className="w-5 h-5 mb-1" />
+                <span className="font-bold text-sm">Modo Simulado</span>
+                <span className="text-xs opacity-75">Tempo & Nota Final</span>
+              </button>
+              <button 
+                onClick={() => setMode('estudo')}
+                className={`p-3 rounded-xl border-2 flex flex-col items-center justify-center transition-all ${mode === 'estudo' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 hover:border-slate-300 text-slate-500'}`}
+              >
+                <GraduationCap className="w-5 h-5 mb-1" />
+                <span className="font-bold text-sm">Modo Estudo</span>
+                <span className="text-xs opacity-75">Feedback Imediato</span>
+              </button>
+            </div>
+
+            {/* DISCIPLINAS */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block flex items-center">
+                <BookOpen className="w-3 h-3 mr-1" /> Disciplinas
+              </label>
+              <div className="space-y-2">
+                {Object.keys(selectedSubjects).map(subject => (
+                  <label key={subject} className="flex items-center space-x-3 cursor-pointer p-1 hover:bg-slate-100 rounded">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedSubjects[subject]} 
+                      onChange={() => toggleSubject(subject)}
+                      className="w-4 h-4 text-green-600 rounded focus:ring-green-500 border-gray-300"
+                    />
+                    <span className="text-gray-700 text-sm">
+                      {subject === 'Conhecimentos Específicos' && selectedRole 
+                        ? `Específicos (${ROLES.find(r => r.id === selectedRole).label})` 
+                        : subject}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* SLIDER */}
+            <div>
+               <div className="flex justify-between text-sm text-gray-600 mb-2 font-medium">
+                 <span>Questões: {numQuestions}</span>
+               </div>
+               <input 
+                  type="range" min="3" max="10" value={numQuestions} 
+                  onChange={(e) => setNumQuestions(parseInt(e.target.value))}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-600"
+                />
+            </div>
+
+            <button 
+              onClick={handleStart}
+              disabled={!selectedRole}
+              className={`w-full py-4 rounded-xl shadow-lg font-bold flex items-center justify-center text-lg transition-all
+                ${!selectedRole 
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
+                  : 'bg-gray-900 hover:bg-black text-white transform hover:scale-[1.02]'}`}
             >
-              <option value="" disabled>-- Escolha uma ênfase --</option>
-              {ROLES.map(role => (
-                <option key={role.id} value={role.id}>{role.label}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* DISCIPLINAS */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-gray-700 mb-3 flex items-center text-sm uppercase tracking-wide">
-              <BookOpen className="w-4 h-4 mr-2" /> Disciplinas
-            </h3>
-            <div className="space-y-2">
-              {Object.keys(selectedSubjects).map(subject => (
-                <label key={subject} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded transition">
-                  <input 
-                    type="checkbox" 
-                    checked={selectedSubjects[subject]} 
-                    onChange={() => toggleSubject(subject)}
-                    className="w-5 h-5 text-green-600 rounded focus:ring-green-500 border-gray-300"
-                  />
-                  <span className="text-gray-700 text-sm font-medium">
-                    {subject === 'Conhecimentos Específicos' && selectedRole 
-                      ? `Específicos (${ROLES.find(r => r.id === selectedRole).label})` 
-                      : subject}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* QUANTIDADE */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-gray-700 mb-3 flex items-center text-sm uppercase tracking-wide">
-              <BarChart2 className="w-4 h-4 mr-2" /> Nº de Questões
-            </h3>
-            <div className="flex justify-between items-center px-2">
-              <input 
-                type="range" 
-                min="3" 
-                max="10" 
-                value={numQuestions} 
-                onChange={(e) => setNumQuestions(parseInt(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600"
-              />
-              <span className="ml-4 font-bold text-green-700 bg-green-100 px-3 py-1 rounded-full text-sm">{numQuestions}</span>
-            </div>
+              {mode === 'simulado' ? 'Iniciar Prova' : 'Iniciar Estudos'} <PlayCircle className="ml-2 w-5 h-5" />
+            </button>
           </div>
         </div>
 
-        <button 
-          onClick={handleStart}
-          disabled={!selectedRole}
-          className={`w-full py-4 rounded-xl shadow-lg font-bold flex items-center justify-center transition-all
-            ${!selectedRole 
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-              : 'bg-green-600 hover:bg-green-700 text-white transform hover:scale-[1.02]'}`}
-        >
-          Iniciar Simulado <ChevronRight className="ml-2 w-5 h-5" />
-        </button>
+        {/* COLUNA DIREITA - ESTATÍSTICAS (DASHBOARD) */}
+        <div className="md:w-80 bg-slate-100 rounded-2xl p-5 border border-slate-200 flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-slate-700 flex items-center"><History className="w-4 h-4 mr-2"/> Seu Histórico</h3>
+            {history.length > 0 && (
+              <button onClick={onClearHistory} className="text-xs text-red-500 hover:underline flex items-center">
+                <Trash2 className="w-3 h-3 mr-1"/> Limpar
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center">
+              <span className="block text-2xl font-bold text-gray-800">{history.length}</span>
+              <span className="text-xs text-gray-500 uppercase font-bold">Testes</span>
+            </div>
+            <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center">
+              <span className={`block text-2xl font-bold ${averageScore >= 70 ? 'text-green-600' : averageScore >= 50 ? 'text-yellow-600' : 'text-red-500'}`}>
+                {averageScore}%
+              </span>
+              <span className="text-xs text-gray-500 uppercase font-bold">Média</span>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto max-h-[300px] space-y-2 pr-1 custom-scrollbar">
+            {history.length === 0 ? (
+              <div className="text-center text-gray-400 text-sm py-8 italic">
+                Nenhum teste realizado ainda.
+              </div>
+            ) : (
+              history.slice().reverse().map((h, i) => (
+                <div key={i} className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm text-sm">
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="font-bold text-gray-700">{h.score}% de acerto</span>
+                    <span className="text-xs text-gray-400">{new Date(h.date).toLocaleDateString()}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 truncate">{h.role || 'Geral'}</p>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full inline-block mt-1 ${h.mode === 'estudo' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                    {h.mode === 'estudo' ? 'Estudo' : 'Simulado'}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-const QuizScreen = ({ questions, onFinish, roleName }) => {
+const QuizScreen = ({ questions, onFinish, roleName, mode }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [timeLeft, setTimeLeft] = useState(questions.length * 150); 
+  const [timeLeft, setTimeLeft] = useState(mode === 'simulado' ? questions.length * 150 : 0);
+  // Estados para modo estudo
+  const [studyModeAnswered, setStudyModeAnswered] = useState(false);
+  const [showExplanation, setShowExplanation] = useState(false);
 
   const currentQuestion = questions[currentQuestionIndex];
   const totalQuestions = questions.length;
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          onFinish(answers);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    let timer;
+    if (mode === 'simulado') {
+      timer = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            onFinish(answers);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      // No modo estudo, o tempo conta pra cima (opcional, aqui deixei estático ou progressivo)
+    }
     return () => clearInterval(timer);
-  }, [answers, onFinish]);
+  }, [answers, onFinish, mode]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -345,15 +414,23 @@ const QuizScreen = ({ questions, onFinish, roleName }) => {
   };
 
   const handleSelectOption = (optionIndex) => {
-    setAnswers(prev => ({
-      ...prev,
-      [currentQuestion.id]: optionIndex
-    }));
+    if (mode === 'estudo' && studyModeAnswered) return; // Trava resposta se já respondeu
+
+    const newAnswers = { ...answers, [currentQuestion.id]: optionIndex };
+    setAnswers(newAnswers);
+
+    if (mode === 'estudo') {
+      setStudyModeAnswered(true);
+      setShowExplanation(true);
+    }
   };
 
   const handleNext = () => {
     if (currentQuestionIndex < totalQuestions - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
+      // Resetar estados do modo estudo
+      setStudyModeAnswered(false);
+      setShowExplanation(false);
     } else {
       onFinish(answers);
     }
@@ -363,20 +440,27 @@ const QuizScreen = ({ questions, onFinish, roleName }) => {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
-      <header className="bg-white shadow-sm p-4 sticky top-0 z-10 border-b border-yellow-400">
+      <header className={`bg-white shadow-sm p-4 sticky top-0 z-10 border-b-4 ${mode === 'estudo' ? 'border-blue-400' : 'border-yellow-400'}`}>
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <div>
              <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-1">{roleName}</span>
              <span className="font-bold text-gray-800 text-lg">Questão {currentQuestionIndex + 1} <span className="text-gray-400 text-sm">/ {totalQuestions}</span></span>
           </div>
-          <div className={`flex items-center font-mono font-bold px-4 py-2 rounded-lg bg-gray-50 border ${timeLeft < 60 ? 'text-red-600 border-red-200 animate-pulse' : 'text-gray-700 border-gray-200'}`}>
-            <Clock className="w-5 h-5 mr-2" />
-            {formatTime(timeLeft)}
-          </div>
+          {mode === 'simulado' && (
+            <div className={`flex items-center font-mono font-bold px-4 py-2 rounded-lg bg-gray-50 border ${timeLeft < 60 ? 'text-red-600 border-red-200 animate-pulse' : 'text-gray-700 border-gray-200'}`}>
+              <Clock className="w-5 h-5 mr-2" />
+              {formatTime(timeLeft)}
+            </div>
+          )}
+          {mode === 'estudo' && (
+            <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold uppercase tracking-wide">
+              Modo Estudo
+            </div>
+          )}
         </div>
         <div className="w-full bg-gray-200 h-1 mt-4 absolute bottom-0 left-0">
           <div 
-            className="bg-yellow-500 h-1 transition-all duration-300" 
+            className={`${mode === 'estudo' ? 'bg-blue-500' : 'bg-yellow-500'} h-1 transition-all duration-300`}
             style={{ width: `${progress}%` }}
           ></div>
         </div>
@@ -385,7 +469,7 @@ const QuizScreen = ({ questions, onFinish, roleName }) => {
       <main className="flex-1 max-w-4xl mx-auto w-full p-4 md:p-8 pb-32">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-10 animate-fade-in">
           <div className="flex items-center mb-6">
-             <span className="text-xs font-bold px-3 py-1 bg-blue-50 text-blue-700 rounded-full uppercase tracking-wide border border-blue-100">
+             <span className="text-xs font-bold px-3 py-1 bg-slate-100 text-slate-700 rounded-full uppercase tracking-wide border border-slate-200">
                {currentQuestion.subject === 'Conhecimentos Específicos' ? 'Específicos' : currentQuestion.subject}
              </span>
              <span className="mx-2 text-gray-300">•</span>
@@ -397,30 +481,70 @@ const QuizScreen = ({ questions, onFinish, roleName }) => {
           </h2>
 
           <div className="space-y-3">
-            {currentQuestion.options.map((option, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSelectOption(idx)}
-                className={`w-full text-left p-4 rounded-xl border transition-all duration-200 flex items-start group relative overflow-hidden
-                  ${answers[currentQuestion.id] === idx 
-                    ? 'border-green-600 bg-green-50/50 ring-1 ring-green-600 z-10' 
-                    : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50'
-                  }`}
-              >
-                <div className={`w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0 mr-4 font-bold text-sm transition-colors
-                   ${answers[currentQuestion.id] === idx 
-                     ? 'bg-green-600 border-green-600 text-white' 
-                     : 'bg-white border-gray-300 text-gray-400 group-hover:border-gray-400 group-hover:text-gray-600'
-                   }`}
+            {currentQuestion.options.map((option, idx) => {
+              const isSelected = answers[currentQuestion.id] === idx;
+              const isCorrect = idx === currentQuestion.correctIndex;
+              
+              // Lógica de cores para Modo Estudo
+              let borderClass = 'border-gray-200 hover:border-gray-400 hover:bg-gray-50';
+              let bgClass = 'bg-white';
+              let iconBg = 'bg-white border-gray-300 text-gray-400';
+              
+              if (mode === 'estudo' && studyModeAnswered) {
+                if (isCorrect) {
+                  borderClass = 'border-green-500 bg-green-50'; // Sempre mostra a correta
+                  iconBg = 'bg-green-500 border-green-500 text-white';
+                } else if (isSelected && !isCorrect) {
+                  borderClass = 'border-red-500 bg-red-50'; // Mostra o erro
+                  iconBg = 'bg-red-500 border-red-500 text-white';
+                } else {
+                  borderClass = 'border-gray-100 opacity-50'; // Apaga as outras
+                }
+              } else if (isSelected) {
+                // Modo Simulado (apenas selecionado)
+                borderClass = 'border-gray-800 bg-gray-50 ring-1 ring-gray-800';
+                iconBg = 'bg-gray-800 border-gray-800 text-white';
+              }
+
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleSelectOption(idx)}
+                  disabled={mode === 'estudo' && studyModeAnswered}
+                  className={`w-full text-left p-4 rounded-xl border transition-all duration-200 flex items-start group relative overflow-hidden ${borderClass} ${bgClass}`}
                 >
-                  {String.fromCharCode(65 + idx)}
-                </div>
-                <span className={`text-gray-700 text-base mt-1 ${answers[currentQuestion.id] === idx ? 'font-medium' : ''}`}>
-                  {option}
-                </span>
-              </button>
-            ))}
+                  <div className={`w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0 mr-4 font-bold text-sm transition-colors ${iconBg}`}>
+                    {String.fromCharCode(65 + idx)}
+                  </div>
+                  <span className={`text-gray-700 text-base mt-1 ${isSelected ? 'font-medium' : ''}`}>
+                    {option}
+                  </span>
+                  {mode === 'estudo' && studyModeAnswered && isCorrect && (
+                    <CheckCircle className="absolute right-4 top-4 text-green-600 w-6 h-6" />
+                  )}
+                  {mode === 'estudo' && studyModeAnswered && isSelected && !isCorrect && (
+                    <XCircle className="absolute right-4 top-4 text-red-500 w-6 h-6" />
+                  )}
+                </button>
+              );
+            })}
           </div>
+
+          {/* EXPLICAÇÃO NO MODO ESTUDO */}
+          {mode === 'estudo' && showExplanation && (
+            <div className="mt-8 bg-blue-50 border border-blue-100 rounded-xl p-6 animate-fade-in-up">
+              <div className="flex items-start">
+                <div className="bg-blue-100 p-2 rounded-full mr-4">
+                  <AlertCircle className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-blue-900 mb-1">Comentário do Professor</h4>
+                  <p className="text-blue-800 text-sm leading-relaxed">{currentQuestion.explanation}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
       </main>
 
@@ -428,17 +552,22 @@ const QuizScreen = ({ questions, onFinish, roleName }) => {
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <button 
             onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
-            disabled={currentQuestionIndex === 0}
+            disabled={currentQuestionIndex === 0 || (mode === 'estudo')}
             className={`px-6 py-3 rounded-lg font-medium transition ${currentQuestionIndex === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             Anterior
           </button>
 
+          {/* Botão de Avançar com lógica diferente para estudo */}
           <button 
             onClick={handleNext}
-            className="px-8 py-3 bg-gray-900 text-white rounded-lg font-bold shadow-lg hover:bg-black transition flex items-center"
+            disabled={mode === 'estudo' && !studyModeAnswered}
+            className={`px-8 py-3 rounded-lg font-bold shadow-lg transition flex items-center
+              ${mode === 'estudo' && !studyModeAnswered 
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                : 'bg-gray-900 text-white hover:bg-black'}`}
           >
-            {currentQuestionIndex === totalQuestions - 1 ? 'Finalizar Prova' : 'Próxima'}
+            {currentQuestionIndex === totalQuestions - 1 ? 'Finalizar' : 'Próxima'}
             {currentQuestionIndex < totalQuestions - 1 && <ChevronRight className="w-4 h-4 ml-2" />}
           </button>
         </div>
@@ -447,7 +576,7 @@ const QuizScreen = ({ questions, onFinish, roleName }) => {
   );
 };
 
-const ResultScreen = ({ questions, userAnswers, onRetry, roleName }) => {
+const ResultScreen = ({ questions, userAnswers, onRetry, roleName, mode }) => {
   const correctCount = questions.reduce((acc, q) => {
     return acc + (userAnswers[q.id] === q.correctIndex ? 1 : 0);
   }, 0);
@@ -466,7 +595,10 @@ const ResultScreen = ({ questions, userAnswers, onRetry, roleName }) => {
           <div className="bg-gradient-to-r from-gray-900 to-slate-800 text-white p-8 relative overflow-hidden">
             <div className="relative z-10 flex flex-col md:flex-row justify-between items-center">
                 <div className="mb-6 md:mb-0 text-center md:text-left">
-                    <h2 className="text-xl opacity-80 mb-1">Resultado Simulado</h2>
+                    <div className="flex items-center justify-center md:justify-start space-x-2 mb-2 opacity-80">
+                      <span className="uppercase tracking-widest text-xs font-bold">Resultado</span>
+                      <span className="px-2 py-0.5 rounded bg-white/20 text-[10px]">{mode === 'estudo' ? 'MODO ESTUDO' : 'SIMULADO'}</span>
+                    </div>
                     <h1 className="text-3xl font-bold text-yellow-400 mb-2">{roleName}</h1>
                     <p className="text-slate-300">{feedback}</p>
                 </div>
@@ -482,13 +614,13 @@ const ResultScreen = ({ questions, userAnswers, onRetry, roleName }) => {
               onClick={onRetry}
               className="inline-flex items-center px-6 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-gray-700 hover:bg-gray-50 font-medium transition"
             >
-              <RefreshCw className="w-4 h-4 mr-2" /> Tentar Outro Cargo/Prova
+              <RefreshCw className="w-4 h-4 mr-2" /> Voltar ao Início
             </button>
           </div>
         </div>
 
         <div className="space-y-6">
-          <h3 className="text-lg font-bold text-gray-700 ml-2">Gabarito Comentado</h3>
+          <h3 className="text-lg font-bold text-gray-700 ml-2">Revisão Detalhada</h3>
           {questions.map((q, index) => {
             const userAnswer = userAnswers[q.id];
             const isCorrect = userAnswer === q.correctIndex;
@@ -555,22 +687,35 @@ export default function App() {
   const [activeQuestions, setActiveQuestions] = useState([]);
   const [userAnswers, setUserAnswers] = useState({});
   const [currentRoleName, setCurrentRoleName] = useState('');
+  const [currentMode, setCurrentMode] = useState('simulado');
+  
+  // PERSISTÊNCIA DE HISTÓRICO
+  const [history, setHistory] = useState(() => {
+    const saved = localStorage.getItem('simulpetro_history');
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  const startQuiz = (roleId, subjects, num) => {
+  useEffect(() => {
+    localStorage.setItem('simulpetro_history', JSON.stringify(history));
+  }, [history]);
+
+  const clearHistory = () => {
+    if (confirm("Tem certeza que deseja apagar todo o histórico?")) {
+      setHistory([]);
+    }
+  };
+
+  const startQuiz = (roleId, subjects, num, mode) => {
     const roleLabel = ROLES.find(r => r.id === roleId)?.label;
     setCurrentRoleName(roleLabel);
+    setCurrentMode(mode);
 
     // FILTRO INTELIGENTE
     let filtered = QUESTION_BANK.filter(q => {
-      // É da matéria selecionada?
       const isSubjectSelected = subjects.includes(q.subject);
-      
-      // Se é específico, bate com o cargo?
       if (q.subject === 'Conhecimentos Específicos') {
         return isSubjectSelected && q.role === roleId;
       }
-      
-      // Se é básico (global), só precisa estar selecionado
       return isSubjectSelected && q.role === 'global';
     });
 
@@ -579,7 +724,6 @@ export default function App() {
       return;
     }
 
-    // Embaralhar e cortar
     const shuffled = [...filtered].sort(() => 0.5 - Math.random());
     const selected = shuffled.slice(0, num);
     
@@ -589,15 +733,30 @@ export default function App() {
   };
 
   const finishQuiz = (answers) => {
+    // Salvar histórico
+    const correctCount = activeQuestions.reduce((acc, q) => {
+      return acc + (answers[q.id] === q.correctIndex ? 1 : 0);
+    }, 0);
+    const score = Math.round((correctCount / activeQuestions.length) * 100);
+    
+    const newRecord = {
+      date: new Date().toISOString(),
+      score,
+      role: currentRoleName,
+      mode: currentMode
+    };
+    
+    setHistory(prev => [...prev, newRecord]);
+    
     setUserAnswers(answers);
     setScreen('result');
   };
 
   return (
     <div className="font-sans text-gray-900 antialiased">
-      {screen === 'welcome' && <WelcomeScreen onStart={startQuiz} />}
-      {screen === 'quiz' && <QuizScreen questions={activeQuestions} onFinish={finishQuiz} roleName={currentRoleName} />}
-      {screen === 'result' && <ResultScreen questions={activeQuestions} userAnswers={userAnswers} onRetry={() => setScreen('welcome')} roleName={currentRoleName} />}
+      {screen === 'welcome' && <WelcomeScreen onStart={startQuiz} history={history} onClearHistory={clearHistory} />}
+      {screen === 'quiz' && <QuizScreen questions={activeQuestions} onFinish={finishQuiz} roleName={currentRoleName} mode={currentMode} />}
+      {screen === 'result' && <ResultScreen questions={activeQuestions} userAnswers={userAnswers} onRetry={() => setScreen('welcome')} roleName={currentRoleName} mode={currentMode} />}
     </div>
   );
 }
