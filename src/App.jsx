@@ -234,7 +234,7 @@ const WelcomeScreen = ({ onStart, history, onClearHistory }) => {
             {/* LOGO DA EMPRESA */}
             <div className="flex-shrink-0">
                <img 
-                 src="../logo-simulpetro.png" 
+                 src="./logo-simulpetro.png" 
                  alt="Logo Simulado Petrobras" 
                  className="h-20 w-auto object-contain" 
                  onError={(e) => {
@@ -456,7 +456,7 @@ const QuizScreen = ({ questions, onFinish, roleName, mode }) => {
       <header className={`bg-white shadow-sm p-4 sticky top-0 z-10 border-b-4 ${mode === 'estudo' ? 'border-blue-400' : 'border-yellow-400'}`}>
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <div className="flex items-center">
-             <img src="../logo-simulpetro.png" className="h-8 w-auto mr-3 hidden md:block opacity-80" alt="Logo" onError={(e) => e.target.style.display='none'}/>
+             <img src="./logo-simulpetro.png" className="h-8 w-auto mr-3 hidden md:block opacity-80" alt="Logo" onError={(e) => e.target.style.display='none'}/>
              <div>
                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-1">{roleName}</span>
                <span className="font-bold text-gray-800 text-lg">Questão {currentQuestionIndex + 1} <span className="text-gray-400 text-sm">/ {totalQuestions}</span></span>
@@ -616,7 +616,7 @@ const ResultScreen = ({ questions, userAnswers, onRetry, roleName, mode }) => {
                       <span className="px-2 py-0.5 rounded bg-white/20 text-[10px]">{mode === 'estudo' ? 'MODO ESTUDO' : 'SIMULADO'}</span>
                     </div>
                     <div className="flex items-center justify-center md:justify-start space-x-4 mb-2">
-                       <img src="../logo-simulpetro.png" className="h-10 w-auto bg-white/10 rounded p-1" alt="Logo" onError={(e) => e.target.style.display='none'} />
+                       <img src="./logo-simulpetro.png" className="h-10 w-auto bg-white/10 rounded p-1" alt="Logo" onError={(e) => e.target.style.display='none'} />
                        <h1 className="text-3xl font-bold text-yellow-400">{roleName}</h1>
                     </div>
                     <p className="text-slate-300">{feedback}</p>
